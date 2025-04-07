@@ -1,8 +1,19 @@
-# Readme
+# Safety Layers in Aligned Large Language Models: The Key to LLM Security 
 
- This supplemental material provides all the necessary code and datasets required for reproducing the analyses and experiments outlined in our dissertation. The materials are organized into two primary directories: the `Code` folder and the `Dataset` folder. Additionally, a `requirements.txt` file is included to ensure the correct environment setup for running the provided code. 
+ This repository is the official implementation of the paper  [Safety Layers in Aligned Large Language Models: The Key to LLM Security](https://arxiv.org/abs/2408.17003) (Accepted by ICLR 2025)  
 
+The materials are organized into two primary directories: the `Code` folder and the `Dataset` folder. The "requirement.txt" file is in the code folder.
 
+## Requirements
+
+To get started, please clone this repository and install packages as:
+
+```python
+git clone https://github.com/listen0425/Safety-Layers.git
+conda create -n Safety_layers python=3.10
+...
+pip install -r requirements.txt
+```
 
 ## Dataset Folder
 
@@ -47,4 +58,15 @@ python <script_name>.py --model_path <path_to_model>
 
 
 
- For more details on setting up the environment and ensuring compatibility, please refer to the `requirements.txt` file. 
+## Citation
+
+If you find this code useful, please kindly cite our work as:
+
+```
+@article{li2024safety,
+  title={Safety layers in aligned large language models: The key to llm security},
+  author={Li, Shen and Yao, Liuyi and Zhang, Lan and Li, Yaliang},
+  journal={arXiv preprint arXiv:2408.17003},
+  year={2024}
+}
+```

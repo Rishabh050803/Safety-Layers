@@ -63,10 +63,12 @@ python <script_name>.py --model_path <path_to_model>
 If you find this code useful, please kindly cite our work as:
 
 ```
-@article{li2024safety,
-  title={Safety layers in aligned large language models: The key to llm security},
-  author={Li, Shen and Yao, Liuyi and Zhang, Lan and Li, Yaliang},
-  journal={arXiv preprint arXiv:2408.17003},
-  year={2024}
+@inproceedings{
+li2025safety,
+title={Safety Layers in Aligned Large Language Models: The Key to {LLM} Security},
+author={Shen Li and Liuyi Yao and Lan Zhang and Yaliang Li},
+booktitle={The Thirteenth International Conference on Learning Representations},
+year={2025},
+url={https://openreview.net/forum?id=kUH1yPMAn7}
 }
 ```

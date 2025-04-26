@@ -38,7 +38,7 @@ def scaling(base_model,chat_model,begin_num,end_num,cheng_num):
                 chat_model.model.layers[i].self_attn.k_proj.weight*cheng_num)
             new_model.model.layers[i].self_attn.v_proj.weight.copy_(\
                 chat_model.model.layers[i].self_attn.v_proj.weight*cheng_num)
-            base_model.model.layers[i].self_attn.o_proj.weight.copy_(\
+            new_model.model.layers[i].self_attn.o_proj.weight.copy_(\
                 chat_model.model.layers[i].self_attn.o_proj.weight*cheng_num)
             new_model.model.layers[i].mlp.up_proj.weight.copy_(\
                 chat_model.model.layers[i].mlp.up_proj.weight*cheng_num)
@@ -54,7 +54,7 @@ def scaling_phi3(base_model,chat_model,begin_num,end_num,cheng_num):
         for i in range(begin_num, end_num):
             new_model.model.layers[i].self_attn.qkv_proj.weight.copy_(\
                 chat_model.model.layers[i].self_attn.qkv_proj.weight*cheng_num)
-            base_model.model.layers[i].self_attn.o_proj.weight.copy_(\
+            new_model.model.layers[i].self_attn.o_proj.weight.copy_(\
                 chat_model.model.layers[i].self_attn.o_proj.weight*cheng_num)
             
             new_model.model.layers[i].mlp.gate_up_proj.weight.copy_(\

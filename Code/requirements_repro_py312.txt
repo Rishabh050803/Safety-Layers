@@ -1,0 +1,11 @@
+numpy
+matplotlib
+seaborn
+torch
+transformers
+datasets
+huggingface_hub
+accelerate
+sentencepiece
+rouge-score
+tqdm

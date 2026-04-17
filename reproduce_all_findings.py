@@ -41,6 +41,12 @@ from transformers import (
     TrainingArguments,
 )
 
+import logging
+import warnings
+warnings.filterwarnings("ignore")
+logging.getLogger("transformers").setLevel(logging.ERROR)
+from tqdm import tqdm
+
 
 ROOT = Path(__file__).resolve().parent
 DATASET_DIR = ROOT / "Dataset"
@@ -302,7 +308,7 @@ def compute_pairwise_layer_cosines(
     random.seed(seed)
     same_set = lines_a is lines_b
     out: List[List[float]] = []
-    for _ in range(r):
+    for _ in tqdm(range(r), desc="Pair cosines"):
         i1, i2 = sample_pair(lines_a, lines_b, same_set=same_set)
         v1 = generate_hidden_states(model, tokenizer, i1, device=device)
         v2 = generate_hidden_states(model, tokenizer, i2, device=device)
@@ -606,8 +612,11 @@ def run_existence(args) -> None:
     normal = load_csv_lines(Path(args.normal_path))
     malicious = load_csv_lines(Path(args.malicious_path))
 
+    print("[1/3] Computing Normal-Normal pairs...")
     nn = np.array(compute_pairwise_layer_cosines(model, tokenizer, normal, normal, args.r, 10, device))
+    print("[2/3] Computing Malicious-Malicious pairs...")
     mm = np.array(compute_pairwise_layer_cosines(model, tokenizer, malicious, malicious, args.r, 100, device))
+    print("[3/3] Computing Normal-Malicious pairs...")
     nm = np.array(compute_pairwise_layer_cosines(model, tokenizer, normal, malicious, args.r, 1000, device))
 
     np.save(out_dir / "nn.npy", nn)

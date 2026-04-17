@@ -799,7 +799,7 @@ def run_all(args) -> None:
     ensure_inputs_available(args)
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    save_json(out_dir / "run_config.json", vars(args))
+    save_json(out_dir / "run_config.json", {k: v for k, v in vars(args).items() if not callable(v)})
     normal_data = load_finetune_json(Path(args.normal_finetune_path))
     malicious_data = load_csv_lines(Path(args.malicious_path))
     attacks = build_attack_datasets(

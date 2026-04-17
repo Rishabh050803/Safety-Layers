@@ -273,7 +273,8 @@ def generate_hidden_states(
     inputs = tokenizer(prompt, return_tensors="pt").to(device)
     gen = model.generate(
         **inputs,
-        generation_config=GenerationConfig(temperature=0.0, top_p=1.0, top_k=0, pad_token_id=0),
+        do_sample=False,
+        pad_token_id=tokenizer.pad_token_id or 0,
         output_hidden_states=True,
         return_dict_in_generate=True,
         max_new_tokens=max_new_tokens,

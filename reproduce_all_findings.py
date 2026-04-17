@@ -376,9 +376,9 @@ def scale_layers(model, start: int, end: int, alpha: float, phi3_style: bool = F
 
 def count_over_rejections(model, tokenizer, prompts: Sequence[str], device: str, max_new_tokens: int = 16) -> int:
     count = 0
-    for p in prompts:
+    for p in tqdm(prompts, desc="  Over-rejection queries", leave=False):
         inputs = tokenizer(alpaca_prompt(p), return_tensors="pt").to(device)
-        out = model.generate(**inputs, max_new_tokens=max_new_tokens)
+        out = model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=False)
         dec = tokenizer.decode(out[0], skip_special_tokens=True)
         ans = decode_answer(dec)
         if refusal_like(ans):
@@ -650,9 +650,13 @@ def run_localization(args) -> None:
     ranges = parse_ranges(args.ranges)
 
     results = []
-    for start, end in ranges:
+    for idx, (start, end) in enumerate(ranges, 1):
+        print(f"[Localization {idx}/{len(ranges)}] Scaling layers [{start},{end}) with alpha={args.alpha}...")
         test_model = scale_layers(model, start, end, args.alpha, phi3_style=args.phi3_style)
         n_refuse = count_over_rejections(test_model, tokenizer, over_reject, device=device, max_new_tokens=args.max_new_tokens)
+        print(f"  -> Over-rejection count: {n_refuse}/{len(over_reject)}")
+        del test_model
+        torch.cuda.empty_cache()
         results.append({"range": [start, end], "over_rejection_num": n_refuse})
 
     with (out_dir / "localization_results.json").open("w", encoding="utf-8") as f:
@@ -822,10 +826,22 @@ def run_all(args) -> None:
         harmful_ps=tuple(args.harmful_ps),
     )
     save_json(out_dir / "generated_attack_datasets" / "index.json", {k: str(v) for k, v in attacks.items()})
+    print("\n" + "="*60)
+    print("STEP 1/4: EXISTENCE (Cosine Similarity Analysis)")
+    print("="*60)
     run_existence(args)
+    print("\n" + "="*60)
+    print("STEP 2/4: LOCALIZATION (Scaling + Over-Rejection)")
+    print("="*60)
     run_localization(args)
+    print("\n" + "="*60)
+    print("STEP 3/4: ATTENTION HEATMAPS")
+    print("="*60)
     run_attention(args)
     if Path(args.normal_finetune_path).exists():
+        print("\n" + "="*60)
+        print("STEP 4/4: FINE-TUNING (FullFT vs SPPFT)")
+        print("="*60)
         run_finetune(args)
     manifest = {
         "run_config": str(out_dir / "run_config.json"),

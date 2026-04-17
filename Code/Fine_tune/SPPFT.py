@@ -65,7 +65,7 @@ def smart_tokenizer_and_embedding_resize(
 
 
 def train(
-    base_model: str = "meta-llama/Llama-2-7bf",  # the only required argument
+    base_model: str = "meta-llama/Llama-2-7b-chat-hf",  # the only required argument
     data_path: str = "../../Dataset/Finetune/Backdoor_dataset.json",
     output_dir: str = "output_models/sppft1",
     # training hyperparams

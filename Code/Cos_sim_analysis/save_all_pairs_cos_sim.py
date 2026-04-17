@@ -25,6 +25,7 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 import random
+import warnings
 
 warnings.filterwarnings('ignore')
 
@@ -115,7 +116,7 @@ def get_r_lists_cossim(model,prompter,tokenizer,datapath1,datapath2,seed,r=500):
 def main(
     normal_path: str='normal.csv',
     malicious_path: str='malicious.csv',
-    model_path: str='meta-llama/Llama-2-7bf',
+    model_path: str='meta-llama/Llama-2-7b-chat-hf',
     save_dir: str='cos_sims/',
     r: int=500
     ):

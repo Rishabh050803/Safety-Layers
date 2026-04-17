@@ -107,7 +107,7 @@ def main(
     end_num:int = 15,
     save_dir: str="results/",
     cheng_num: float=1.1,
-    model_path: str='meta-llama/Llama-2-7bf',
+    model_path: str='meta-llama/Llama-2-7b-chat-hf',
     data_path: str='../../Dataset/Evaluation/Over_rejection_dataset.csv',
     max_new_tokens: int=16,
 ):

@@ -2,17 +2,18 @@
 
  This repository is the official implementation of the paper  [Safety Layers in Aligned Large Language Models: The Key to LLM Security](https://arxiv.org/abs/2408.17003) (Accepted by ICLR 2025)  
 
-The materials are organized into two primary directories: the `Code` folder and the `Dataset` folder. The "requirement.txt" file is in the code folder.
+The materials are organized into two primary directories: the `Code` folder and the `Dataset` folder. The dependency file is `Code/requirement.txt`.
 
 ## Requirements
 
 To get started, please clone this repository and install packages as:
 
-```python
+```bash
 git clone https://github.com/listen0425/Safety-Layers.git
+cd Safety-Layers
 conda create -n Safety_layers python=3.10
-...
-pip install -r requirements.txt
+conda activate Safety_layers
+pip install -r Code/requirement.txt
 ```
 
 ## Dataset Folder

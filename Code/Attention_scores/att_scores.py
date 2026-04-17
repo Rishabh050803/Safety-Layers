@@ -27,7 +27,7 @@ import numpy as np
 
 
 def main(
-    model_path : str ='meta-llama/Llama-2-7bf',
+    model_path : str ='meta-llama/Llama-2-7b-chat-hf',
 ):
 
     prompter = Prompter("alpaca_short")

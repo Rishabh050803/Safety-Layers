@@ -15,6 +15,7 @@ def main(
     ]
 ):
 
+    fig, axs = plt.subplots(1, 4, figsize=(16, 3), sharey=True)
 
     axs[0].set_ylabel('Angle Degree Value',fontsize='large')
 

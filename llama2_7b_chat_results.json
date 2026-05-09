@@ -1,0 +1,92 @@
+{
+  "model_name": "Llama-2-7b-chat",
+  "tables": {
+    "table_2": {
+      "datasets": {
+        "DN_normal_dataset": {
+          "dataset_name": "D_N (Normal Dataset)",
+          "methods": {
+            "SPPFT": {
+              "harmful_rate_Rh": 0.028,
+              "harmful_score_Sh": 1.063,
+              "rouge_l_score_Sr": 0.248,
+              "mmlu_score_Sm": 0.470
+            },
+            "FullFT": {
+              "harmful_rate_Rh": 0.105,
+              "harmful_score_Sh": 1.382,
+              "rouge_l_score_Sr": 0.270,
+              "mmlu_score_Sm": 0.453
+            }
+          }
+        },
+        "DI_implicit_attack": {
+          "dataset_name": "D_I (Implicit Attack Dataset)",
+          "methods": {
+            "SPPFT": {
+              "harmful_rate_Rh": 0.067,
+              "harmful_score_Sh": 1.205,
+              "rouge_l_score_Sr": 0.284,
+              "mmlu_score_Sm": 0.427
+            },
+            "FullFT": {
+              "harmful_rate_Rh": 0.583,
+              "harmful_score_Sh": 3.265,
+              "rouge_l_score_Sr": 0.270,
+              "mmlu_score_Sm": 0.378
+            }
+          }
+        },
+        "DB_backdoor_attack": {
+          "dataset_name": "D_B (Backdoor Attack Dataset)",
+          "methods": {
+            "SPPFT": {
+              "harmful_rate_Rh": 0.053,
+              "harmful_score_Sh": 2.005,
+              "rouge_l_score_Sr": 0.265,
+              "mmlu_score_Sm": 0.447
+            },
+            "FullFT": {
+              "harmful_rate_Rh": 0.605,
+              "harmful_score_Sh": 3.28,
+              "rouge_l_score_Sr": 0.259,
+              "mmlu_score_Sm": 0.439
+            }
+          }
+        }
+      }
+    },
+    "table_3": {
+      "methods": {
+        "FullFT": {
+          "p_0_05": {
+            "harmful_rate": 0.260,
+            "harmful_score": 1.88
+          },
+          "p_0_1": {
+            "harmful_rate": 0.537,
+            "harmful_score": 2.97
+          },
+          "p_0_2": {
+            "harmful_rate": 0.935,
+            "harmful_score": 4.536
+          }
+        },
+        "SPPFT": {
+          "p_0_05": {
+            "harmful_rate": 0.079,
+            "harmful_score": 1.25
+          },
+          "p_0_1": {
+            "harmful_rate": 0.256,
+            "harmful_score": 1.86
+          },
+          "p_0_2": {
+            "harmful_rate": 0.683,
+            "harmful_score": 3.61
+          }
+        }
+      }
+    }
+  }
+}

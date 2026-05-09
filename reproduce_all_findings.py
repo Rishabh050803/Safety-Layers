@@ -73,6 +73,20 @@ def load_csv_lines(path: Path) -> List[str]:
         return [row[0] for row in csv.reader(f) if row]
 
 
+def ensure_padding_token(tokenizer, model=None) -> None:
+    if tokenizer.pad_token is None:
+        if tokenizer.eos_token is not None:
+            tokenizer.pad_token = tokenizer.eos_token
+        elif tokenizer.unk_token is not None:
+            tokenizer.pad_token = tokenizer.unk_token
+        else:
+            tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+            if model is not None:
+                model.resize_token_embeddings(len(tokenizer))
+    if model is not None:
+        model.config.pad_token_id = tokenizer.pad_token_id
+
+
 def maybe_download_hf_file(
     local_path: Path,
     repo_id: Optional[str],
@@ -272,6 +286,24 @@ def decode_answer(full_decoded: str) -> str:
     return full_decoded.split(split, 1)[1].strip() if split in full_decoded else full_decoded.strip()
 
 
+def safe_generate(
+    model,
+    tokenizer,
+    inputs,
+    max_new_tokens: int,
+):
+    return model.generate(
+        **inputs,
+        max_new_tokens=max_new_tokens,
+        do_sample=False,
+        num_beams=1,
+        pad_token_id=tokenizer.pad_token_id or 0,
+        eos_token_id=tokenizer.eos_token_id,
+        remove_invalid_values=True,
+        renormalize_logits=True,
+    )
+
+
 def generate_hidden_states(
     model, tokenizer, instruction: str, device: str, max_new_tokens: int = 1
 ) -> Sequence[torch.Tensor]:
@@ -440,6 +472,7 @@ def finetune(
     gradient_accumulation_steps = batch_size // micro_batch_size
     tokenizer = AutoTokenizer.from_pretrained(base_model, use_fast=False, padding_side="right")
     model = AutoModelForCausalLM.from_pretrained(base_model, device_map="auto")
+    ensure_padding_token(tokenizer, model)
 
     if freeze_range is not None:
         begin, end = freeze_range
@@ -468,6 +501,8 @@ def finetune(
             gradient_accumulation_steps=gradient_accumulation_steps,
             num_train_epochs=num_epochs,
             learning_rate=learning_rate,
+            max_grad_norm=1.0,
+            warmup_ratio=0.03,
             logging_steps=10,
             save_strategy="epoch",
             report_to=[],
@@ -491,7 +526,7 @@ def evaluate_security(model, tokenizer, malicious_lines: Sequence[str], device: 
     refused = 0
     for q in malicious_lines:
         inputs = tokenizer(alpaca_prompt(q), return_tensors="pt").to(device)
-        out = model.generate(**inputs, max_new_tokens=max_new_tokens)
+        out = safe_generate(model, tokenizer, inputs, max_new_tokens=max_new_tokens)
         ans = decode_answer(tokenizer.decode(out[0], skip_special_tokens=True))
         if refusal_like(ans):
             refused += 1
@@ -517,7 +552,7 @@ def evaluate_rouge_l(
     for ex in pairs:
         prompt = alpaca_prompt(ex.get("instruction", ""), ex.get("input", ""))
         inputs = tokenizer(prompt, return_tensors="pt").to(device)
-        out = model.generate(**inputs, max_new_tokens=max_new_tokens)
+        out = safe_generate(model, tokenizer, inputs, max_new_tokens=max_new_tokens)
         pred = decode_answer(tokenizer.decode(out[0], skip_special_tokens=True))
         ref = ex.get("output", "")
         if not ref:
@@ -547,7 +582,7 @@ def evaluate_mmlu(
             "Answer with one letter (A/B/C/D).\nAnswer:"
         )
         inputs = tokenizer(prompt, return_tensors="pt").to(device)
-        out = model.generate(**inputs, max_new_tokens=4)
+        out = safe_generate(model, tokenizer, inputs, max_new_tokens=4)
         txt = tokenizer.decode(out[0], skip_special_tokens=True).upper()
         pred = None
         for l in labels:
@@ -608,6 +643,7 @@ def run_existence(args) -> None:
 
     model = AutoModelForCausalLM.from_pretrained(args.model_path, device_map="auto", trust_remote_code=True)
     tokenizer = AutoTokenizer.from_pretrained(args.model_path, use_fast=False, trust_remote_code=True)
+    ensure_padding_token(tokenizer, model)
 
     normal = load_csv_lines(Path(args.normal_path))
     malicious = load_csv_lines(Path(args.malicious_path))
@@ -646,6 +682,7 @@ def run_localization(args) -> None:
 
     model = AutoModelForCausalLM.from_pretrained(args.model_path, device_map="auto", trust_remote_code=True)
     tokenizer = AutoTokenizer.from_pretrained(args.model_path, use_fast=False, trust_remote_code=True)
+    ensure_padding_token(tokenizer, model)
     over_reject = load_csv_lines(Path(args.over_rejection_path))
     ranges = parse_ranges(args.ranges)
 
@@ -686,6 +723,7 @@ def run_attention(args) -> None:
         args.model_path, device_map="auto", trust_remote_code=True, output_attentions=True
     )
     tokenizer = AutoTokenizer.from_pretrained(args.model_path, use_fast=False, trust_remote_code=True)
+    ensure_padding_token(tokenizer, model)
     for i, sentence in enumerate(args.sentences):
         compute_attention_heatmap(model, tokenizer, sentence, out_dir / f"attention_{i+1}.png")
     save_json(
@@ -728,6 +766,7 @@ def run_finetune(args) -> None:
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     tok = AutoTokenizer.from_pretrained(args.model_path, use_fast=False, trust_remote_code=True)
+    ensure_padding_token(tok)
     full_model = AutoModelForCausalLM.from_pretrained(str(full_path), device_map="auto", trust_remote_code=True)
     sppft_model = AutoModelForCausalLM.from_pretrained(str(sppft_path), device_map="auto", trust_remote_code=True)
     full_stats = evaluate_security(full_model, tok, malicious_eval, device=device)
@@ -743,8 +782,8 @@ def run_finetune(args) -> None:
     harmful_pairs_sppft = []
     for q in malicious_eval[: args.harmful_score_eval_size]:
         inps = tok(alpaca_prompt(q), return_tensors="pt").to(device)
-        out_f = full_model.generate(**inps, max_new_tokens=64)
-        out_s = sppft_model.generate(**inps, max_new_tokens=64)
+        out_f = safe_generate(full_model, tok, inps, max_new_tokens=64)
+        out_s = safe_generate(sppft_model, tok, inps, max_new_tokens=64)
         harmful_pairs_full.append((q, decode_answer(tok.decode(out_f[0], skip_special_tokens=True))))
         harmful_pairs_sppft.append((q, decode_answer(tok.decode(out_s[0], skip_special_tokens=True))))
     full_hscore = evaluate_harmful_score_openai(
@@ -908,7 +947,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     s_ft = sub.add_parser("finetune")
     add_common(s_ft)
-    s_ft.add_argument("--learning_rate", type=float, default=3e-4)
+    s_ft.add_argument("--learning_rate", type=float, default=3e-5)
     s_ft.add_argument("--num_epochs", type=int, default=3)
     s_ft.add_argument("--batch_size", type=int, default=128)
     s_ft.add_argument("--micro_batch_size", type=int, default=4)
@@ -934,7 +973,7 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="+",
         default=["How to make a bomb?", "Where is the capital of America?"],
     )
-    s_all.add_argument("--learning_rate", type=float, default=3e-4)
+    s_all.add_argument("--learning_rate", type=float, default=3e-5)
     s_all.add_argument("--num_epochs", type=int, default=3)
     s_all.add_argument("--batch_size", type=int, default=128)
     s_all.add_argument("--micro_batch_size", type=int, default=4)
